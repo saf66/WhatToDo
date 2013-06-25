@@ -3,87 +3,84 @@ package com.example.whattodo;
 import java.util.ArrayList;
 
 import android.os.Bundle;
-import android.app.ListActivity;
-import android.app.ProgressDialog;
+import android.os.Vibrator;
+import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
-// http://www.softwarepassion.com/android-series-custom-listview-items-and-adapters/
-// http://stackoverflow.com/questions/11265743/onitemclicklistener-with-custom-adapter-and-listview
-public class MainActivity extends ListActivity implements OnItemClickListener,OnItemLongClickListener {
-   
-    private ProgressDialog m_ProgressDialog = null;
-    private ArrayList<Order> m_orders = null;
-    private OrderAdapter m_adapter;
-   
-    /** Called when the activity is first created. */
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-    	super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
-        
-        ListView lv = getListView();
-        lv.setTextFilterEnabled(true);
-        lv.setOnItemClickListener(this);
-        lv.setOnItemLongClickListener(this);
-        
-        m_orders = new ArrayList<Order>();
-        this.m_adapter = new OrderAdapter(this, R.layout.row, m_orders);
-        setListAdapter(this.m_adapter);
+// http://stackoverflow.com/questions/13648181/refresh-data-in-listview-when-data-from-server
+// http://stackoverflow.com/questions/1111980/how-to-handle-screen-orientation-change-when-progress-dialog-and-background-thre
+public class MainActivity extends Activity implements OnItemClickListener,OnItemLongClickListener {
 
-		Thread thread = new Thread(null, new Runnable() {
-		    @Override
-		    public void run() {
-		        getOrders();
-		    }
-		});
-        thread.start();
-        m_ProgressDialog = ProgressDialog.show(MainActivity.this, "Please wait...", "Retrieving data ...", true);
-    }
-    
-    private Runnable returnRes = new Runnable() {
+	private static final String TAG = MainActivity.class.getName();
 
-        @Override
-        public void run() {
-            if(m_orders != null && m_orders.size() > 0){
-                m_adapter.notifyDataSetChanged();
-                for(int i=0;i<m_orders.size();i++)
-                m_adapter.add(m_orders.get(i));
-            }
-            m_ProgressDialog.dismiss();
-            m_adapter.notifyDataSetChanged();
-        }
-      };
-    
-    private void getOrders(){
-        try{
-            m_orders = new ArrayList<Order>();
-            Order o1 = new Order();
-            o1.setOrderName("SF services");
-            o1.setOrderStatus("Pending");
-            Order o2 = new Order();
-            o2.setOrderName("SF Advertisement");
-            o2.setOrderStatus("Completed");
-            m_orders.add(o1);
-            m_orders.add(o2);
-               Thread.sleep(2000);
-            Log.i("ARRAY", ""+ m_orders.size());
-          } catch (Exception e) {
-            Log.e("BACKGROUND_PROC", e.getMessage());
-          }
-          runOnUiThread(returnRes);
-      }
+	private ArrayList<TaskItem> data = new ArrayList<TaskItem>();
+
+	private Vibrator vibe;
+	private TaskAdapter adapter;
+
+	@Override
+	//[TODO] rotate event causes reload of data, interrupts longer-lived processes
+	//[TODO] switch to details view on click
+	//[TODO] open context menu on long click -> delete
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
+
+		vibe = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
+		ListView lv = (ListView) findViewById(R.id.list);
+		lv.setOnItemClickListener(this);
+		lv.setOnItemLongClickListener(this);
+
+		adapter = new TaskAdapter(this, R.layout.row, data);
+		lv.setAdapter(adapter);
+	}
+
+	@Override
+	public void onRestart() {
+		super.onRestart();
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+
+		// fill with demo data
+		data.clear();
+		for (int i = 0; i < 20; i++) {
+			data.add(new TaskItem(false, "SF services", "Pending"));
+			data.add(new TaskItem(true, "SF Advertisement", "Completed"));
+		}
+		adapter.notifyDataSetChanged();
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+	}
+
+	@Override
+	public void onStop() {
+		super.onStop();
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+	}
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -93,44 +90,27 @@ public class MainActivity extends ListActivity implements OnItemClickListener,On
 	}
 
 	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle option selection
+		switch (item.getItemId()) {
+			case R.id.action_settings:
+				//startActivity(new Intent(this, SettingsActivity.class));
+				return true;
+			default:
+				return super.onOptionsItemSelected(item);
+		}
+	}
+
+	@Override
 	public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-		Toast.makeText(getApplicationContext(), parent.getItemAtPosition(position).toString(), Toast.LENGTH_SHORT).show();
+		Log.i(TAG, "onItemClick: " + parent.getItemAtPosition(position).toString());
 	}
 
 	@Override
 	public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-		Toast.makeText(getApplicationContext(), "You long clicked on: " + parent.getItemAtPosition(position).toString(), Toast.LENGTH_SHORT).show();
+		Log.i(TAG, "onItemLongClick: " + parent.getItemAtPosition(position).toString());
+		vibe.vibrate(20);
 		return true;
 	}
 
-	private class OrderAdapter extends ArrayAdapter<Order> {
-
-	    private ArrayList<Order> items;
-
-	    public OrderAdapter(Context context, int textViewResourceId, ArrayList<Order> items) {
-	            super(context, textViewResourceId, items);
-	            this.items = items;
-	    }
-
-	    @Override
-	    public View getView(int position, View convertView, ViewGroup parent) {
-	            View v = convertView;
-	            if (v == null) {
-	                LayoutInflater vi = (LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	                v = vi.inflate(R.layout.row, null);
-	            }
-	            Order o = items.get(position);
-	            if (o != null) {
-	                    TextView tt = (TextView) v.findViewById(R.id.toptext);
-	                    TextView bt = (TextView) v.findViewById(R.id.bottomtext);
-	                    if (tt != null) {
-	                          tt.setText("Name: "+o.getOrderName());
-	                    }
-	                    if(bt != null){
-	                          bt.setText("Status: "+ o.getOrderStatus());
-	                    }
-	            }
-	            return v;
-	    }
-	}
 }

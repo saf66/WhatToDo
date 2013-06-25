@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">WhatToDo</string>
+    <string name="app_name">Custom ListView Adapter</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="empty"></string>
-    <string name="main_no_items">No orders to display</string>
+    <string name="test">test</string>
+    <string name="no_items">No items to display.</string>
 
 </resources>
